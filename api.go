@@ -216,6 +216,95 @@ func UsrpointServer(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w,"%d",p[u]["x"])
 }
 
+func PointcalcServer(w http.ResponseWriter, r *http.Request) {
+  pcalc:=user
+  point5:=0
+  point6:=0
+
+  for i:=0; i<length; i++{
+    for j:=0; j<width; j++ {
+      if(pcalc[i][j]==1||pcalc[i][j]==2){
+        pcalc[i][j]=5
+      }
+      if(pcalc[i][j]==3||pcalc[i][j]==4){
+        pcalc[i][j]=6
+      }
+      fmt.Fprintf(w,"%d ",pcalc[i][j])
+    }
+    fmt.Fprintf(w,"\n")
+  }
+
+
+  for y:=0;y<length;y++{//縦
+    for x:=0;x<width;x++{//横
+      for h:=y+2;h<length;h++{//縦の長さ
+        for w:=x+2;w<width;w++{//横の長さ
+
+          is_5:=true
+          is_6:=true
+          cnt:=0
+          tmp_5:=0
+          tmp_6:=0
+
+          for i:=y;i<h;i++{
+            for j:=x;j<w;j++{
+              if(i==y||i==h-1||j==x||j==w-1){
+                if(!(cnt==0||cnt==w-1||cnt==w*(h-1)||cnt==w*h-1)){
+                  if(pcalc[i][j]!=5){is_5=false}
+                  if(pcalc[i][j]!=6){is_6=false}
+                }
+              }
+                if(pcalc[i][j]!=5){tmp_5+=user[i][j]}
+                if(pcalc[i][j]!=6){tmp_6+=user[i][j]}
+              }
+            }
+            cnt++
+            if(is_5){point5+=tmp_5}
+            if(is_6){point6+=tmp_6}
+            //if(tmp_5!=0){fmt.Fprintf(w,"score = %d ",tmp_5)}
+            //if(tmp_6!=0){fmt.Fprintf(w,"score = %d ",tmp_6)}
+          }
+        }
+      }
+    }
+
+  for y:=0;y<length;y++{//縦
+    for x:=0;x<width;x++{//横
+        //if(pcalc[y][x]==5)point5+=user[y][x]
+        //if(pcalc[y][x]==6)point6+=user[y][x]
+    }
+  }
+  fmt.Fprintf(w,"score = %d ",point5)
+  fmt.Fprintf(w,"score = %d ",point6)
+
+}
+
+
+/*
+func fill(x int, y int,c int){
+  user[x][y]=9
+  if(user[x][y-1]==c){
+    fill(x,y-1,c)
+  }
+  if(user[x+1][y]==c){
+    fill(x+1,y,c)
+  }
+  if(user[x][y+1]==c){
+    fill(x,y+1,c)
+  }
+  if(user[x-1][y]==c){
+    fill(x-1,y,c)
+  }
+
+}
+*/
+
+func InitServer(w http.ResponseWriter, r *http.Request) {
+  r.ParseForm()
+  //u,_:=strconv.Atoi(r.FormValue())
+  fmt.Fprintf(w,"%d ",r.ParseForm())
+}
+
 func main() {
     // http.HandleFuncにルーティングと処理する関数を登録
     http.HandleFunc("/start", StartServer)
@@ -223,6 +312,8 @@ func main() {
     http.HandleFunc("/remove", RemoveServer)
     http.HandleFunc("/show", ShowServer)
     http.HandleFunc("/usrpoint", UsrpointServer)
+    http.HandleFunc("/pointcalc", PointcalcServer)
+    http.HandleFunc("/init", InitServer)
 
     // ログ出力
     log.Printf("Start Go HTTP Server")
