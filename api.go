@@ -231,7 +231,8 @@ var dy [4]int = [4]int{0, 1, 0, -1}
 var flag bool
 var cnt int
 func check_area(y int,x int ,wall int)bool{
-
+  cnt++
+  if(cnt>=width*length*2){return true}
   ret:=true
   came[y][x]=true
   if(!flag){return false}
@@ -252,6 +253,7 @@ func check_area(y int,x int ,wall int)bool{
 
 func init_check_area(){
   flag=true
+  cnt=0
   for i:=0;i<length;i++{
     for j:=0;j<width;j++{
       came[i][j]=false
