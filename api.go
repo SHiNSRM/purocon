@@ -109,6 +109,7 @@ func MoveServer(w http.ResponseWriter, r *http.Request) {
     fmt.Println(r.FormValue("d"))
     //d:=r.FormValue("d")
     d:=strings.Split(r.FormValue("d"), "")
+    fmt.Println(d);
     /*
     for i:=0; i<len(d); i++{
       if d[i]=="r"{p[u]["y"]++
@@ -216,11 +217,21 @@ func UsrpointServer(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w,"%d",p[u]["x"])
 }
 
+func myAbs(x int) int{
+  if(x<0){return -x}
+  return x
+}
+
 func PointcalcServer(w http.ResponseWriter, r *http.Request) {
   pcalc:=user
   point5:=0
   point6:=0
-
+  //pcalc[0][1]=5
+  //pcalc[0][2]=5
+  //pcalc[1][0]=5
+  //pcalc[2][1]=5
+  //pcalc[2][2]=5
+  //pcalc[1][3]=5
   for i:=0; i<length; i++{
     for j:=0; j<width; j++ {
       if(pcalc[i][j]==1||pcalc[i][j]==2){
@@ -234,35 +245,43 @@ func PointcalcServer(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w,"\n")
   }
 
+  fmt.Fprintf(w,"盤面\n")
+  for i:=0; i<length; i++{
+    for j:=0; j<width; j++ {
+    fmt.Fprintf(w,"%04d ",field[i][j])
+    }
+    fmt.Fprintf(w,"\n")
+  }
+
+
 
   for y:=0;y<length;y++{//縦
     for x:=0;x<width;x++{//横
-      for h:=y+2;h<length;h++{//縦の長さ
-        for w:=x+2;w<width;w++{//横の長さ
+      for h:=2;y+h<length;h++{//縦の長さ
+        for w:=2;x+w<width;w++{//横の長さ
 
           is_5:=true
           is_6:=true
-          cnt:=0
           tmp_5:=0
           tmp_6:=0
 
-          for i:=y;i<h;i++{
-            for j:=x;j<w;j++{
-              if(i==y||i==h-1||j==x||j==w-1){
-                if(!(cnt==0||cnt==w-1||cnt==w*(h-1)||cnt==w*h-1)){
+          for i:=y;i<=y+h;i++{
+            for j:=x;j<=x+w;j++{
+              if(i==y||i==y+h||j==x||j==x+w){
+                if(!((i==y&&j==x)||(i==y&&j==x+w)||(i==y+h&&j==x)||(i==y+h&&j==x+w))){
                   if(pcalc[i][j]!=5){is_5=false}
                   if(pcalc[i][j]!=6){is_6=false}
                 }
-              }
-                if(pcalc[i][j]!=5){tmp_5+=user[i][j]}
-                if(pcalc[i][j]!=6){tmp_6+=user[i][j]}
+              }else{
+                  if(pcalc[i][j]!=5){tmp_5+=myAbs(field[i][j])}
+                  if(pcalc[i][j]!=6){tmp_6+=myAbs(field[i][j])}
+                }
               }
             }
-            cnt++
+
+
             if(is_5){point5+=tmp_5}
             if(is_6){point6+=tmp_6}
-            //if(tmp_5!=0){fmt.Fprintf(w,"score = %d ",tmp_5)}
-            //if(tmp_6!=0){fmt.Fprintf(w,"score = %d ",tmp_6)}
           }
         }
       }
@@ -270,8 +289,8 @@ func PointcalcServer(w http.ResponseWriter, r *http.Request) {
 
   for y:=0;y<length;y++{//縦
     for x:=0;x<width;x++{//横
-        //if(pcalc[y][x]==5)point5+=user[y][x]
-        //if(pcalc[y][x]==6)point6+=user[y][x]
+        //if(pcalc[y][x]==5){point5+=field[y][x]}
+        //if(pcalc[y][x]==6){point6+=field[y][x]}
     }
   }
   fmt.Fprintf(w,"score = %d ",point5)
