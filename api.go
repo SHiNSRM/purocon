@@ -13,6 +13,7 @@ type String string
 // http.HandleFuncに登録する関数
 // http.ResponseWriterとhttp.Requestを受ける
 var user=make([][]int,12)
+var pcalc=make([][]int,12)
 var field=make([][]int,12)
 var turn=0
 var length=0
@@ -109,6 +110,7 @@ func MoveServer(w http.ResponseWriter, r *http.Request) {
     fmt.Println(r.FormValue("d"))
     //d:=r.FormValue("d")
     d:=strings.Split(r.FormValue("d"), "")
+    fmt.Println(d);
     /*
     for i:=0; i<len(d); i++{
       if d[i]=="r"{p[u]["y"]++
@@ -216,10 +218,54 @@ func UsrpointServer(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w,"%d",p[u]["x"])
 }
 
+func myAbs(x int) int{
+  if(x<0){return -x}
+  return x
+}
+
+var use5[60][60] bool
+var use6[60][60] bool
+var came[60][60] bool
+var dx [4]int = [4]int{1, 0, -1, 0}
+var dy [4]int = [4]int{0, 1, 0, -1}
+var flag bool
+var cnt int
+func check_area(y int,x int ,wall int)bool{
+  cnt++
+  if(cnt>=width*length*2){return true}
+  ret:=true
+  came[y][x]=true
+  if(!flag){return false}
+  if(pcalc[y][x]==wall){return true}
+  for i:=0;i<4;i++{
+    nx:=x+dx[i]
+    ny:=y+dy[i]
+    tmp:=true
+    if(nx<0||ny<0||nx>=width||ny>=length){
+      flag=false
+      return false
+    }
+    if(!came[ny][nx]){tmp=check_area(ny,nx,wall)}
+    if(!tmp){ret=false}
+  }
+  return ret
+}
+
+func init_check_area(){
+  flag=true
+  cnt=0
+  for i:=0;i<length;i++{
+    for j:=0;j<width;j++{
+      came[i][j]=false
+    }
+  }
+}
+
 func PointcalcServer(w http.ResponseWriter, r *http.Request) {
-  pcalc:=user
+  pcalc=user
   point5:=0
   point6:=0
+
 
   for i:=0; i<length; i++{
     for j:=0; j<width; j++ {
@@ -234,44 +280,47 @@ func PointcalcServer(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w,"\n")
   }
 
+  fmt.Fprintf(w,"盤面\n")
+  for i:=0; i<length; i++{
+    for j:=0; j<width; j++ {
+    fmt.Fprintf(w,"%04d ",field[i][j])
+    }
+    fmt.Fprintf(w,"\n")
+  }
 
-  for y:=0;y<length;y++{//縦
-    for x:=0;x<width;x++{//横
-      for h:=y+2;h<length;h++{//縦の長さ
-        for w:=x+2;w<width;w++{//横の長さ
+  //////////以上プリントでバッグ
+  for i:=0;i<length;i++{
+    for j:=0;j<width;j++{
+      use5[i][j]=false
+      use6[i][j]=false
+    }
+  }
+  for i:=0;i<length;i++{
+    for j:=0;j<width;j++{
+      init_check_area() //flag=trueにして、cameをすべてfalseにする
+      if(check_area(i,j,5)&&!use5[i][j]){
+        use5[i][j]=true;
 
-          is_5:=true
-          is_6:=true
-          cnt:=0
-          tmp_5:=0
-          tmp_6:=0
+      }
+      init_check_area()
+      if(check_area(i,j,6)&&!use6[i][j]){
+        use6[i][j]=true;
 
-          for i:=y;i<h;i++{
-            for j:=x;j<w;j++{
-              if(i==y||i==h-1||j==x||j==w-1){
-                if(!(cnt==0||cnt==w-1||cnt==w*(h-1)||cnt==w*h-1)){
-                  if(pcalc[i][j]!=5){is_5=false}
-                  if(pcalc[i][j]!=6){is_6=false}
-                }
-              }
-                if(pcalc[i][j]!=5){tmp_5+=user[i][j]}
-                if(pcalc[i][j]!=6){tmp_6+=user[i][j]}
-              }
-            }
-            cnt++
-            if(is_5){point5+=tmp_5}
-            if(is_6){point6+=tmp_6}
-            //if(tmp_5!=0){fmt.Fprintf(w,"score = %d ",tmp_5)}
-            //if(tmp_6!=0){fmt.Fprintf(w,"score = %d ",tmp_6)}
-          }
-        }
       }
     }
+  }
 
   for y:=0;y<length;y++{//縦
     for x:=0;x<width;x++{//横
-        //if(pcalc[y][x]==5)point5+=user[y][x]
-        //if(pcalc[y][x]==6)point6+=user[y][x]
+      if(use5[y][x]){
+        if(pcalc[y][x]==5){point5+=field[y][x]
+        }else{point5+=myAbs(field[y][x])}
+      }
+      if(use6[y][x]){
+        if(pcalc[y][x]==6){point6+=field[y][x]
+        }else{point6+=myAbs(field[y][x])}
+      }
+
     }
   }
   fmt.Fprintf(w,"score = %d ",point5)
@@ -279,25 +328,6 @@ func PointcalcServer(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
-/*
-func fill(x int, y int,c int){
-  user[x][y]=9
-  if(user[x][y-1]==c){
-    fill(x,y-1,c)
-  }
-  if(user[x+1][y]==c){
-    fill(x+1,y,c)
-  }
-  if(user[x][y+1]==c){
-    fill(x,y+1,c)
-  }
-  if(user[x-1][y]==c){
-    fill(x-1,y,c)
-  }
-
-}
-*/
 
 func InitServer(w http.ResponseWriter, r *http.Request) {
   r.ParseForm()
